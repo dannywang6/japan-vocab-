@@ -1,0 +1,78 @@
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+:root {
+  --bg: #f5f7fa;
+  --bg-card: #ffffff;
+  --text: #303133;
+  --text-secondary: #606266;
+  --text-muted: #909399;
+  --border: #ebeef5;
+  --border-light: #eee;
+  --hover-bg: #f5f5f5;
+  --toggle-bg: #f5f7fa;
+}
+
+html.dark {
+  --bg: #1a1a1a;
+  --bg-card: #2a2a2a;
+  --text: #d0d0d0;
+  --text-secondary: #909090;
+  --text-muted: #707070;
+  --border: #444;
+  --border-light: #2d2d2d;
+  --hover-bg: #383838;
+  --toggle-bg: #2a2a2a;
+  --correct-bg: #1e3012;
+  --correct-border: #6aaa3a;
+  --correct-text: #b0e070;
+  --wrong-bg: #301212;
+  --wrong-border: #cc4040;
+  --wrong-text: #e07070;
+  --mode-active-bg: #3a3545;
+  --el-bg-color: #1a1a1a;
+  --el-bg-color-overlay: #2a2a2a;
+  --el-bg-color-page: #1a1a1a;
+  --el-border-color: #444;
+  --el-border-color-light: #2d2d2d;
+  --el-text-color-primary: #d0d0d0;
+  --el-text-color-regular: #909090;
+  --el-text-color-secondary: #707070;
+  --el-fill-color: #383838;
+  --el-fill-color-light: #2a2a2a;
+  --el-fill-color-lighter: #2d2d2d;
+}
+
+body {
+  font-family: system-ui, 'Segoe UI', Roboto, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  -webkit-font-smoothing: antialiased;
+}
+
+#app {
+  width: 100%;
+  min-height: 100vh;
+}
+
+.el-aside {
+  background: var(--bg-card) !important;
+  border-right: 1px solid var(--border-light);
+}
+
+.el-header {
+  background: var(--bg-card) !important;
+  border-bottom: 1px solid var(--border-light) !important;
+}
+
+.el-menu {
+  border-right: none !important;
+  background: var(--bg-card) !important;
+}
+
+.el-main {
+  background: var(--bg);
+}

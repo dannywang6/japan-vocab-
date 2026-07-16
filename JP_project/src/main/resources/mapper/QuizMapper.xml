@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.jp_project.mapper.QuizMapper">
+
+    <select id="selectRandomExcludeIds" resultType="com.jp_project.entity.Vocabulary">
+        SELECT * FROM vocabulary
+        <where>
+            <if test="excludeIds != null and excludeIds.size() > 0">
+                id NOT IN
+                <foreach collection="excludeIds" item="id" open="(" separator="," close=")">
+                    #{id}
+                </foreach>
+            </if>
+        </where>
+        ORDER BY RAND()
+        LIMIT 1
+    </select>
+
+    <select id="selectByIds" resultType="com.jp_project.entity.Vocabulary">
+        SELECT * FROM vocabulary
+        WHERE id IN
+        <foreach collection="ids" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </select>
+
+</mapper>

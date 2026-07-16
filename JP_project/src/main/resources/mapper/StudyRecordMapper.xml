@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.jp_project.mapper.StudyRecordMapper">
+
+    <resultMap id="BaseResultMap" type="com.jp_project.entity.StudyRecord">
+        <id column="id" property="id"/>
+        <result column="vocab_id" property="vocabId"/>
+        <result column="review_stage" property="reviewStage"/>
+        <result column="next_review_at" property="nextReviewAt"/>
+        <result column="last_reviewed_at" property="lastReviewedAt"/>
+        <result column="created_at" property="createdAt"/>
+    </resultMap>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO study_record (vocab_id, review_stage, next_review_at, created_at)
+        VALUES (#{vocabId}, 0, #{nextReviewAt}, NOW())
+    </insert>
+
+    <select id="selectByVocabId" resultMap="BaseResultMap">
+        SELECT * FROM study_record WHERE vocab_id = #{vocabId}
+    </select>
+
+    <select id="selectByNextReviewDate" resultMap="BaseResultMap">
+        SELECT * FROM study_record WHERE next_review_at = #{date}
+    </select>
+
+    <update id="update">
+        UPDATE study_record
+        SET review_stage     = #{reviewStage},
+            next_review_at   = #{nextReviewAt},
+            last_reviewed_at = #{lastReviewedAt}
+        WHERE id = #{id}
+    </update>
+
+    <select id="existsByVocabId" resultType="boolean">
+        SELECT COUNT(1) > 0 FROM study_record WHERE vocab_id = #{vocabId}
+    </select>
+
+    <delete id="deleteByVocabId">
+        DELETE FROM study_record WHERE vocab_id = #{vocabId}
+    </delete>
+
+</mapper>

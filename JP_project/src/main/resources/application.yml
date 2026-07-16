@@ -1,0 +1,23 @@
+spring:
+  datasource:
+    url: jdbc:mysql://localhost:3306/JP_project?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai
+    username: root
+    password: ***REMOVED***
+
+mybatis:
+  mapper-locations: classpath:mapper/*.xml
+  type-aliases-package: com.jp_project.entity
+  configuration:
+    map-underscore-to-camel-case: true
+
+server:
+  port: 8080
+
+baidu:
+  translate:
+    appid: ***REMOVED***
+    api-key: ***REMOVED***
+
+qwen:
+  api-key: ***REMOVED***
+  model: deepseek-chat
