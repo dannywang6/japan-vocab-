@@ -17,7 +17,7 @@ services:
       - my-network
 
   backend:
-    build: ./backend
+    image: ghcr.io/dannywang6/jp-backend:latest
     container_name: my-backend
     restart: always
     ports:
@@ -32,7 +32,7 @@ services:
       - my-network
 
   frontend:
-    build: ./frontend
+    image: ghcr.io/dannywang6/jp-frontend:latest
     container_name: my-frontend
     restart: always
     ports:

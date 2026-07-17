@@ -3,12 +3,14 @@
     <!-- 复习提醒 -->
     <el-alert
         v-if="reviewCount > 0"
-        :title="`今天有 ${reviewCount} 个词汇需要复习`"
         type="warning"
         show-icon
         :closable="false"
         style="margin-bottom: 20px;"
     >
+      <template #title>
+        今天有 <CountUp :value="reviewCount" /> 个词汇需要复习
+      </template>
       <template #default>
         <el-button size="small" type="warning" @click="$router.push('/review')">
           开始复习
@@ -21,25 +23,25 @@
       <el-col :xs="12" :span="6">
         <div class="stat-card">
           <div class="stat-label">总词汇量</div>
-          <div class="stat-value">{{ stats.total }}</div>
+          <div class="stat-value"><CountUp :value="stats.total" /></div>
         </div>
       </el-col>
       <el-col :xs="12" :span="6">
         <div class="stat-card">
           <div class="stat-label">重点词汇</div>
-          <div class="stat-value">{{ stats.important }}</div>
+          <div class="stat-value"><CountUp :value="stats.important" /></div>
         </div>
       </el-col>
       <el-col :xs="12" :span="6">
         <div class="stat-card">
           <div class="stat-label">今日新增</div>
-          <div class="stat-value">{{ stats.todayAdded }}</div>
+          <div class="stat-value"><CountUp :value="stats.todayAdded" /></div>
         </div>
       </el-col>
       <el-col :xs="12" :span="6">
         <div class="stat-card">
           <div class="stat-label">待复习</div>
-          <div class="stat-value">{{ reviewCount }}</div>
+          <div class="stat-value"><CountUp :value="reviewCount" /></div>
         </div>
       </el-col>
     </el-row>
@@ -70,6 +72,7 @@
 
 import {computed, onMounted, ref} from "vue";
 import {getTodayReview, getVocabularyList} from "../api";
+import CountUp from "../components/CountUp.vue";
 
 const loading = ref(false);
 const list = ref<any[]>([])
