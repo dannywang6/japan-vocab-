@@ -2,7 +2,7 @@
   <el-container style="height: 100vh">
     <div v-if="showSidebar" class="mobile-overlay" @click="showSidebar = false" />
     <el-aside width="200px" :class="{ 'mobile-show': showSidebar }">
-      <div class="logo" @click="$router.push('/')">🇯🇵 日语学习</div>
+      <div class="logo" @click="goHome">🇯🇵 日语学习</div>
       <el-menu
         :default-active="route.path"
         router
@@ -51,6 +51,7 @@ import {computed, ref, onMounted, onUnmounted} from "vue";
 import { useRoute } from "vue-router";
 import { Moon, Sunny, Operation } from "@element-plus/icons-vue";
 import { getTodayReview } from "../api";
+import router from "../router";
 
 const route = useRoute();
 
@@ -86,6 +87,11 @@ const pageTitle = computed(() => {
   };
   return map[route.path] || '';
 })
+
+const goHome = () => {
+  router.push('/')
+  showSidebar.value = false
+}
 onMounted(() => {
   window.addEventListener('review-updated', fetchTodayCount)
   window.addEventListener('resize', onResize)
