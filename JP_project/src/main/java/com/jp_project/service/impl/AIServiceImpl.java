@@ -21,12 +21,12 @@ import java.util.*;
  * API 文档：https://help.aliyun.com/zh/model-studio/developer-reference/use-qwen-by-calling-api
  */
 @Service
-public class ZhipuAIServiceImpl implements AIService {
+public class AIServiceImpl implements AIService {
 
-    @Value("${qwen.api-key}")
+    @Value("${ai.api-key}")
     private String apiKey;
 
-    @Value("${qwen.model}")
+    @Value("${ai.model}")
     private String model;
 
     private static final String API_URL = "https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions";
@@ -125,12 +125,12 @@ public class ZhipuAIServiceImpl implements AIService {
 
         HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
 
-        System.out.println("Qwen AI响应: " + response.body());
+        System.out.println("AI响应: " + response.body());
 
         JsonNode root = MAPPER.readTree(response.body());
 
         if (root.has("error")) {
-            System.err.println("Qwen AI错误: " + root.get("error").toString());
+            System.err.println("AI错误: " + root.get("error").toString());
             return null;
         }
 

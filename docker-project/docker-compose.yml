@@ -6,7 +6,7 @@ services:
     container_name: my-mysql
     restart: always
     environment:
-      MYSQL_ROOT_PASSWORD: ***REMOVED***
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
       MYSQL_DATABASE: JP_project
     ports:
       - "3306:3306"
@@ -25,7 +25,10 @@ services:
     environment:
       SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/JP_project?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai
       SPRING_DATASOURCE_USERNAME: root
-      SPRING_DATASOURCE_PASSWORD: ***REMOVED***
+      SPRING_DATASOURCE_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      AI_API_KEY: ${AI_API_KEY}
+      BAIDU_APPID: ${BAIDU_APPID}
+      BAIDU_API_KEY: ${BAIDU_API_KEY}
     depends_on:
       - mysql
     networks:

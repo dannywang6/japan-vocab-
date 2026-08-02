@@ -2,3 +2,4 @@
 *.log
 docker-project/backend/app.jar
 docker-project/frontend/dist/
+.env

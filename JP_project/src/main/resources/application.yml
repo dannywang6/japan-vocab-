@@ -2,7 +2,7 @@ spring:
   datasource:
     url: jdbc:mysql://localhost:3306/JP_project?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai
     username: root
-    password: ***REMOVED***
+    password: ${DB_PASSWORD}
 
 mybatis:
   mapper-locations: classpath:mapper/*.xml
@@ -15,9 +15,9 @@ server:
 
 baidu:
   translate:
-    appid: ***REMOVED***
-    api-key: ***REMOVED***
+    appid: ${BAIDU_APPID}
+    api-key: ${BAIDU_API_KEY}
 
-qwen:
-  api-key: ***REMOVED***
+ai:
+  api-key: ${AI_API_KEY}
   model: qwen-turbo
