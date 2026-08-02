@@ -20,4 +20,4 @@ baidu:
 
 qwen:
   api-key: ***REMOVED***
-  model: deepseek-v4-flash
+  model: qwen-turbo

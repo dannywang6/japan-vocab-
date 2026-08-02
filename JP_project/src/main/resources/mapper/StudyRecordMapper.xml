@@ -22,7 +22,7 @@
     </select>
 
     <select id="selectByNextReviewDate" resultMap="BaseResultMap">
-        SELECT * FROM study_record WHERE next_review_at = #{date}
+        SELECT * FROM study_record WHERE next_review_at &lt;= #{date}
     </select>
 
     <update id="update">

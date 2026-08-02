@@ -29,7 +29,7 @@ public class ZhipuAIServiceImpl implements AIService {
     @Value("${qwen.model}")
     private String model;
 
-    private static final String API_URL = "https://api.deepseek.com/v1/chat/completions";
+    private static final String API_URL = "https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions";
 
     private static final ObjectMapper MAPPER = new ObjectMapper();
 
