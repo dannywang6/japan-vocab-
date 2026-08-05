@@ -96,8 +96,9 @@ const fetchData = async () => {
       getVocabularyList(),
       getTodayReview()
     ])
-    list.value = vocabRes.data
-    reviewCount.value = reviewRes.data.totalCount
+    list.value = vocabRes.data ?? []
+    reviewCount.value = reviewRes.data.totalCount ?? 0
+  } catch (e) {
   } finally {
     loading.value = false
   }

@@ -102,6 +102,7 @@ onMounted(() => {
 
 onUnmounted(() => {
   window.removeEventListener('resize', onResize)
+  window.removeEventListener('review-updated', fetchTodayCount)
 })
 </script>
 

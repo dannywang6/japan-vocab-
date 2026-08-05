@@ -1,15 +1,22 @@
 import axios from "axios";
 import type {ApiResponse, Vocabulary, AnalyzeResult, QuizQuestion, QuizResult, SubmitPayload, TodayReview} from "../types";
+import {ElMessage} from "element-plus";
 
 const request = axios.create({
     baseURL: import.meta.env.VITE_API_BASE,
     timeout: 15000,
 })
-
 request.interceptors.response.use(
-    res => res.data,
-    err => {
-        console.log(err)
+    (res) => {
+        const body = res.data
+        if (body && body.code !== 200) {
+            ElMessage.error(body.message || '请求失败')
+            return Promise.reject(new Error(body.message))
+        }
+        return body
+    },
+    (err) => {
+        ElMessage.error('网络错误，请稍后重试')
         return Promise.reject(err)
     }
 )

@@ -120,6 +120,8 @@ const handleAnalyze = async () => {
       } else {
         ElMessage.success('填充完成')
       }
+    } else {
+      ElMessage.error(res.message || '填充失败')
     }
   }
   catch (e) {

@@ -11,7 +11,6 @@ import com.jp_project.mapper.QuizRecordMapper;
 import com.jp_project.mapper.StudyRecordMapper;
 import com.jp_project.mapper.VocabularyMapper;
 import com.jp_project.service.QuizService;
-import com.jp_project.service.VocabularyService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -35,6 +34,10 @@ public class QuizServiceImpl implements QuizService {
     public QuizQuestionDTO generateQuestion(String quizType) {
         // 拿到所有词 + 所有至少答错过1词的词ID
         List<Vocabulary> all = vocabularyMapper.selectAll();
+
+        if (all.isEmpty()) {
+            throw new RuntimeException("词库为空，请先导入单词");
+        }
         List<Long> wrongVocabIds = quizRecordMapper.selectAllWrongVocabIds();
 
         // 分三个桶:错的最多,重点,普通

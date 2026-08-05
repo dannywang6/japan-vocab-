@@ -120,12 +120,17 @@ function switchType(type: string) {
 async function fetchQuestion() {
   selected.value = null
   if (firstLoad.value) loading.value = true
-  const res: any = await getQuestion(quizType.value)
-  question.value = res.data
-  loading.value = false
-  firstLoad.value = false
-//jp_cn发音
-  if (quizType.value === 'jp_to_cn') speak()
+  try {
+    const res: any = await getQuestion(quizType.value)
+    question.value = res.data
+    //jp_cn发音
+    if (quizType.value === 'jp_to_cn') speak()
+  } catch (e) {
+    question.value = null
+  } finally {
+    loading.value = false
+    firstLoad.value = false
+  }
 }
 //发音
 function speak() {

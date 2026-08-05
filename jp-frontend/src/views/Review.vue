@@ -83,7 +83,7 @@ async function fetchQuestion() {
       question.value = res.data
       speak()
     } else {
-      finished.value = true
+      question.value = null
     }
   } catch (e) {
     console.error('获取复习题目失败:', e)

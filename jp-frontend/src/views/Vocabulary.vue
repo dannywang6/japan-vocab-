@@ -98,6 +98,7 @@ const handleSearch = async () => {
   try {
     const res: any = await searchVocabulary(searchKeyword.value)
     list.value = res.data
+  } catch (e) {
   } finally {
     loading.value = false
   }
@@ -108,6 +109,7 @@ const fetchList = async () => {
   try {
     const res: any = await getVocabularyList()
     list.value = res.data
+  } catch (e) {
   } finally {
     loading.value = false
   }

@@ -99,6 +99,7 @@ public class ReviewServiceImpl implements ReviewService {
 
         // 随机取3个干扰项
         List<Vocabulary> all = vocabularyMapper.selectAll();
+        if (all.size() < 4) return null;
         List<Long> excludeIds = new ArrayList<>();
         excludeIds.add(correct.getId());
 
