@@ -1,5 +1,14 @@
 import axios from "axios";
-import type {ApiResponse, Vocabulary, AnalyzeResult, QuizQuestion, QuizResult, SubmitPayload, TodayReview} from "../types";
+import type {
+    ApiResponse,
+    Vocabulary,
+    AnalyzeResult,
+    QuizQuestion,
+    QuizResult,
+    SubmitPayload,
+    TodayReview,
+    PageResult
+} from "../types";
 import {ElMessage} from "element-plus";
 
 const request = axios.create({
@@ -63,3 +72,7 @@ export const analyzeWord = (word: string): Promise<ApiResponse<AnalyzeResult>> =
 // 全局搜索
 export const searchVocabulary = (keyword: string): Promise<ApiResponse<Vocabulary[]>> =>
     request.get('/api/vocabularies/search', { params: { keyword } })
+
+//分页查询
+export const getVocabularyPage = (params: { keyword?: string; page?: number; size?: number }): Promise<ApiResponse<PageResult<Vocabulary>>> =>
+    request.get('/api/vocabularies/page', { params })

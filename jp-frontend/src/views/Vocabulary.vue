@@ -39,6 +39,17 @@
         </el-table-column>
       </el-table>
     </div>
+    <div class="pagination-wrap">
+      <el-pagination
+          v-model:current-page="page"
+          v-model:page-size="size"
+          :total="total"
+          :page-sizes="[20, 50, 100]"
+          layout="total, sizes, prev, pager, next"
+          @current-change="fetchList"
+          @size-change="handleSizeChange"
+      />
+    </div>
 
     <!-- 编辑弹窗 -->
     <el-dialog v-model="dialogVisible" title="编辑词汇" width="90%" :style="{ maxWidth: '500px' }">
@@ -78,41 +89,47 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
+import type { Vocabulary } from '../types'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import {getVocabularyList, deleteVocabulary, updateVocabulary, searchVocabulary} from '../api/index'
+import {deleteVocabulary, updateVocabulary, getVocabularyPage} from '../api/index'
 import { initVoice, speakWord } from '../utils/speech'
+import { useDebounceFn } from '@vueuse/core'
 
-const list = ref([])
+
+const list = ref<Vocabulary[]>([])
 const loading = ref(false)
 const dialogVisible = ref(false)
 const editForm = ref<any>({})
 const searchKeyword = ref('')
+const page = ref(1)
+const size = ref(20)
+const total = ref(0)
 
 
-const handleSearch = async () => {
-  if (!searchKeyword.value.trim()) {
-    fetchList()
-    return
-  }
+const handleSearch = useDebounceFn(async () => {
+  page.value = 1
+  await fetchList()
+}, 300)
+
+const fetchList = async () => {
   loading.value = true
   try {
-    const res: any = await searchVocabulary(searchKeyword.value)
-    list.value = res.data
+    const res: any = await getVocabularyPage({
+      keyword: searchKeyword.value.trim(),
+      page: page.value,
+      size: size.value,
+    })
+    list.value = res.data.list
+    total.value = res.data.total
   } catch (e) {
   } finally {
     loading.value = false
   }
 }
 
-const fetchList = async () => {
-  loading.value = true
-  try {
-    const res: any = await getVocabularyList()
-    list.value = res.data
-  } catch (e) {
-  } finally {
-    loading.value = false
-  }
+const handleSizeChange = () => {
+  page.value = 1
+  fetchList()
 }
 
 const openEdit = (row: any) => {
@@ -131,6 +148,9 @@ const handleDelete = async (id: number) => {
   await ElMessageBox.confirm('确定删除这个词汇吗？', '提示', { type: 'warning' })
   await deleteVocabulary(id)
   ElMessage.success('删除成功')
+  if (list.value.length === 1 && page.value > 1) {
+    page.value -= 1
+  }
   fetchList()
 }
 
@@ -149,6 +169,11 @@ onMounted(() => {
   margin-bottom: 16px;
   display: flex;
   align-items: center;
+}
+.pagination-wrap {
+  margin-top: 16px;
+  display: flex;
+  justify-content: flex-end;
 }
 
 .vocab-table :deep(.el-table__row) {

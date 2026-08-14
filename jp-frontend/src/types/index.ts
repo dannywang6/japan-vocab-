@@ -69,3 +69,9 @@ export interface QuizResult {
     selectedVocabId: number
     allOptions: Vocabulary[]
 }
+
+//分页查询
+export interface PageResult<T> {
+    total: number
+    list: T[]
+}

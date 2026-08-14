@@ -2,6 +2,7 @@ package com.jp_project.service;
 
 
 import com.jp_project.dto.AnalyzeResultDTO;
+import com.jp_project.dto.PageResult;
 import com.jp_project.entity.Vocabulary;
 
 import java.util.List;
@@ -22,4 +23,7 @@ public interface VocabularyService {
 
     // 全局搜索
     List<Vocabulary> search(String keyword);
+
+    //分页查询
+    PageResult<Vocabulary> page(String keyword, int page, int size);
 }

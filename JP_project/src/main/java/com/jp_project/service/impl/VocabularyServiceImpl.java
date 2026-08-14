@@ -1,8 +1,8 @@
 package com.jp_project.service.impl;
 
 
-import com.jp_project.common.ApiResponse;
 import com.jp_project.dto.AnalyzeResultDTO;
+import com.jp_project.dto.PageResult;
 import com.jp_project.entity.Vocabulary;
 import com.jp_project.mapper.StudyRecordMapper;
 import com.jp_project.mapper.VocabularyMapper;
@@ -118,4 +118,14 @@ public class VocabularyServiceImpl implements VocabularyService {
         return vocabularyMapper.search(keyword);
     }
 
+    @Override
+    public PageResult<Vocabulary> page(String keyword, int page, int size) {
+        if (page < 1) page = 1;
+        if (size < 1) size = 20;
+        if (size > 200) size = 200;
+        int offset = (page - 1) * size;
+        long total = vocabularyMapper.count(keyword);
+        List<Vocabulary> list = vocabularyMapper.selectPage(keyword, offset, size);
+        return new PageResult<>(total, list);
+    }
 }

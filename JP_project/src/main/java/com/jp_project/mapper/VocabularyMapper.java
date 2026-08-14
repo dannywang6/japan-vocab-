@@ -2,6 +2,7 @@ package com.jp_project.mapper;
 
 import com.jp_project.entity.Vocabulary;
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
 
 import java.util.List;
 
@@ -29,4 +30,12 @@ public interface VocabularyMapper {
 
     // 词汇库查询
     List<Vocabulary> search(String keyWord);
+
+    //分页查询
+    List<Vocabulary> selectPage(@Param("keyword") String keyword,
+                                @Param("offset") int offset,
+                                @Param("size") int size);
+
+    //分页总数
+    long count(@Param("keyword") String keyword);
 }

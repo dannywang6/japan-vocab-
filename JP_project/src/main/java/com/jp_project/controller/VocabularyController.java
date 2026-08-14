@@ -4,6 +4,7 @@ package com.jp_project.controller;
 import com.jp_project.common.ApiResponse;
 import com.jp_project.dto.AnalyzeRequestDTO;
 import com.jp_project.dto.AnalyzeResultDTO;
+import com.jp_project.dto.PageResult;
 import com.jp_project.entity.Vocabulary;
 import com.jp_project.service.VocabularyService;
 import jakarta.validation.Valid;
@@ -63,6 +64,15 @@ public class VocabularyController {
     @GetMapping("/search")
     public ApiResponse<List<Vocabulary>> search(@RequestParam String keyword) {
         return ApiResponse.success(vocabularyService.search(keyword));
+    }
+
+    //分页查询
+    @GetMapping("/page")
+    public ApiResponse<PageResult<Vocabulary>> page(
+            @RequestParam(defaultValue = "") String keyword,
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "20") int size) {
+        return ApiResponse.success(vocabularyService.page(keyword, page, size));
     }
 
 }
