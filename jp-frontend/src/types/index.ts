@@ -12,6 +12,8 @@ export interface Vocabulary {
     meaning: string
     english?: string
     example?: string
+    exampleMeaning?: string
+    partOfSpeech?: string
     note?: string
     important: number
     createdAt?: string
@@ -23,6 +25,9 @@ export interface AnalyzeResult {
     kanji: string
     romaji: string
     meaning: string
+    example?: string
+    exampleMeaning?: string
+    partOfSpeech?: string
     english: string
     duplicate: boolean
     message?: string
