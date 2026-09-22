@@ -13,6 +13,9 @@ public class AnalyzeResultDTO {
     private String romaji;
     private String meaning;
     private String english;
+    private String example;
+    private String exampleMeaning;
+    private String partOfSpeech;
     private boolean duplicate;
     private String message;
 }

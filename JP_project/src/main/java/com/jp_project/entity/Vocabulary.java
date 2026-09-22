@@ -68,4 +68,14 @@ public class Vocabulary {
      * 是否重点词汇：0否，1是
      */
     private Integer important;
+
+    /**
+     * 例句翻译
+     */
+    private String exampleMeaning;
+
+    /**
+     * 词性
+     */
+    private String partOfSpeech;
 }

@@ -46,13 +46,29 @@ public class AIServiceImpl implements AIService {
                 + "1. 有多个同义词时，选日本人日常对话中最常说的那个，不要选书面语或正式用语\n"
                 + "2. 通常用假名写的词，kanji返回空字符串\n"
                 + "3. 片假名外来语通常没有汉字写法，kanji返回空字符串\n"
-                + "4. 只返回JSON，不要任何解释\n"
+                + "4. 生成一个包含该词的简单日语例句\n"
+                + "5. 例句适合日语初学者学习，使用N5-N4左右的简单语法\n"
+                + "6. 例句要自然、日常，不能为了包含单词而写奇怪的句子\n"
+                + "7. 返回例句对应的中文翻译\n"
+                + "8. 判断这个词的词性，例如：名词、动词、い形容词、な形容词、副词、助词等\n"
+                + "9. 只返回JSON，不要任何解释\n"
                 + "示例：\n"
-                + "输入'飞机场'→{\"kanji\":\"空港\",\"kana\":\"くうこう\",\"meaning\":\"机场\",\"english\":\"airport\"}\n"
-                + "输入'手机'→{\"kanji\":\"\",\"kana\":\"スマホ\",\"meaning\":\"手机\",\"english\":\"smartphone\"}";
+                + "输入'飞机场'→"
+                + "{\"kanji\":\"空港\",\"kana\":\"くうこう\",\"meaning\":\"机场\",\"english\":\"airport\","
+                + "\"example\":\"空港まで電車で行きます。\",\"exampleMeaning\":\"坐电车去机场。\",\"partOfSpeech\":\"名词\"}\n"
+                + "输入'手机'→"
+                + "{\"kanji\":\"\",\"kana\":\"スマホ\",\"meaning\":\"手机\",\"english\":\"smartphone\","
+                + "\"example\":\"スマホで写真を撮ります。\",\"exampleMeaning\":\"用手机拍照片。\",\"partOfSpeech\":\"名词\"}";
 
         String userPrompt = "词：" + word + "\n"
-                + "返回格式：{\"kanji\":\"汉字写法或空字符串\",\"kana\":\"平假名或片假名\",\"meaning\":\"中文\",\"english\":\"英文\"}";
+                + "返回格式："
+                + "{\"kanji\":\"汉字写法或空字符串\","
+                + "\"kana\":\"平假名或片假名\","
+                + "\"meaning\":\"中文\","
+                + "\"english\":\"英文\","
+                + "\"example\":\"日语例句\","
+                + "\"exampleMeaning\":\"例句中文翻译\","
+                + "\"partOfSpeech\":\"词性\"}";
 
         try {
             String aiResponse = callQwen(systemPrompt, userPrompt);
@@ -68,6 +84,9 @@ public class AIServiceImpl implements AIService {
             result.setKana(node.has("kana") ? node.get("kana").asText() : "");
             result.setMeaning(node.has("meaning") ? node.get("meaning").asText() : "");
             result.setEnglish(node.has("english") ? node.get("english").asText() : "");
+            result.setExample(node.has("example") ?  node.get("example").asText() : "");
+            result.setExampleMeaning(node.has("exampleMeaning") ?  node.get("exampleMeaning").asText() : "");
+            result.setPartOfSpeech(node.has("partOfSpeech") ?  node.get("partOfSpeech").asText() : "");
 
             // 罗马字用我们自己的转换，不依赖 AI
             String kana = result.getKana();
