@@ -46,7 +46,7 @@
             #{english},
             #{example},
             #{exampleMeaning},
-            #{partOfSpeech}
+            #{partOfSpeech},
             #{important},
             #{note},
             #{createdAt},
