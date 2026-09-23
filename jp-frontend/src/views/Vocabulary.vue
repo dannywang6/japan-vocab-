@@ -55,6 +55,17 @@
           </template>
         </el-table-column>
 
+        <el-table-column label="备注" width="100">
+          <template #default="{ row }">
+            <span v-if="row.partOfSpeech">
+              {{ row.note }}
+            </span>
+            <span v-else style="color: #ccc;">
+              —
+            </span>
+          </template>
+        </el-table-column>
+
         <!-- 例句 -->
         <el-table-column label="例句" min-width="300">
           <template #default="{ row }">
@@ -89,6 +100,7 @@
             </div>
           </template>
         </el-table-column>
+
 
         <!-- 重点 -->
         <el-table-column label="重点" width="70" align="center">
