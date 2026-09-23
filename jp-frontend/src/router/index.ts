@@ -4,6 +4,7 @@ import Home from "../views/Home.vue";
 import AddVocab from "../views/AddVocab.vue";
 import Practice from "../views/Practice.vue";
 import Review from "../views/Review.vue";
+import Dictation from "../views/Dictation.vue";
 
 
 const router = createRouter({
@@ -14,6 +15,7 @@ const router = createRouter({
         { path: '/vocabulary/add', component: AddVocab },
         { path: '/practice', component: Practice },
         { path: '/review', component: Review },
+        { path: '/dictation', component: Dictation },
     ]
 })
 

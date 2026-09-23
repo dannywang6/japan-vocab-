@@ -14,6 +14,9 @@
         <el-menu-item index="/practice">
           <el-icon><EditPen /></el-icon>练习
         </el-menu-item>
+        <el-menu-item index="/dictation">
+          <el-icon><Headset /></el-icon>假名听写
+        </el-menu-item>
         <el-menu-item index="/review">
           <el-icon><Clock /></el-icon>复习计划
         </el-menu-item>
@@ -49,7 +52,7 @@
 
 import {computed, ref, onMounted, onUnmounted} from "vue";
 import { useRoute } from "vue-router";
-import { Moon, Sunny, Operation } from "@element-plus/icons-vue";
+import { Moon, Sunny, Operation, Headset } from "@element-plus/icons-vue";
 import { getTodayReview } from "../api";
 import router from "../router";
 
@@ -83,6 +86,7 @@ const pageTitle = computed(() => {
     '/vocabulary': '词汇库',
     '/vocabulary/add': '添加词汇',
     '/practice': '练习',
+    '/dictation': '假名听写',
     '/review': '复习计划',
   };
   return map[route.path] || '';
