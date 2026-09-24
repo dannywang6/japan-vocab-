@@ -363,9 +363,9 @@ function answer(item: KanaItem) {
     totalCount.value += 1
     timer = setTimeout(newQuestion, 1200)
   } else {
-    highlight.value = { [char]: "wrong" }
+    highlight.value = { [char]: "wrong", [answerChar]: "correct" }
     totalCount.value += 1
-    timer = setTimeout(newQuestion, 800)
+    timer = setTimeout(newQuestion, 1200)
   }
 }
 
@@ -464,17 +464,23 @@ onUnmounted(() => {
   padding: 10px 12px;
   cursor: pointer;
   transition: border-color 0.15s, background 0.15s;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
 }
 
-.group-card:hover,
 .group-card.active {
   border-color: #534ab7;
   background: #fbfbff;
 }
 
-html.dark .group-card:hover,
 html.dark .group-card.active {
   background: var(--mode-active-bg);
+}
+
+@media (hover: hover) {
+  .group-card:hover {
+    border-color: #534ab7;
+  }
 }
 
 .group-label {
@@ -560,6 +566,8 @@ html.dark .group-card.active {
   color: var(--text);
   transition: all 0.15s;
   user-select: none;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .quiz-card:hover {
