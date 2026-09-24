@@ -14,6 +14,13 @@
   --border-light: #eee;
   --hover-bg: #f5f5f5;
   --toggle-bg: #f5f7fa;
+  --correct-bg: #e9f7e3;
+  --correct-border: #66bb6a;
+  --correct-text: #1e7d32;
+  --wrong-bg: #fdecec;
+  --wrong-border: #ef5350;
+  --wrong-text: #c62828;
+  --mode-active-bg: #f0eeff;
 }
 
 html.dark {
