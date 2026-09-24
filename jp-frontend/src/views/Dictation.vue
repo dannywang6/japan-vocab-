@@ -579,12 +579,20 @@ html.dark .group-card.active {
   background: var(--correct-bg);
   border-color: var(--correct-border);
   color: var(--correct-text);
+  animation: pop 0.25s ease;
 }
 
 .quiz-card.wrong {
   background: var(--wrong-bg);
   border-color: var(--wrong-border);
   color: var(--wrong-text);
+  animation: pop 0.25s ease;
+}
+
+@keyframes pop {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.12); }
+  100% { transform: scale(1); }
 }
 
 .reveal-tip {
