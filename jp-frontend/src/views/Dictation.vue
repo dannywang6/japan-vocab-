@@ -333,8 +333,11 @@ function newQuestion() {
   solved.value = false
   revealed.value = false
   answeredChar.value = displayChar(next, script.value)
-  highlight.value = {}
   playQuestion(next)
+  clearSchedule()
+  timer = setTimeout(() => {
+    highlight.value = {}
+  }, 600)
 }
 
 function playQuestion(kana: KanaItem) {
@@ -564,7 +567,7 @@ html.dark .group-card.active {
   cursor: pointer;
   background: var(--bg-card);
   color: var(--text);
-  transition: all 0.15s;
+  transition: background 0.6s ease, border-color 0.6s ease, color 0.6s ease, transform 0.2s ease;
   user-select: none;
   touch-action: manipulation;
   -webkit-tap-highlight-color: transparent;
