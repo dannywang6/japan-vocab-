@@ -480,7 +480,7 @@ html.dark .group-card.active {
   background: var(--mode-active-bg);
 }
 
-@media (hover: hover) {
+@media (hover: hover) and (pointer: fine) {
   .group-card:hover {
     border-color: #534ab7;
   }
@@ -573,9 +573,11 @@ html.dark .group-card.active {
   -webkit-tap-highlight-color: transparent;
 }
 
-.quiz-card:hover {
-  border-color: #afa9ec;
-  background: #eeedfe;
+@media (hover: hover) and (pointer: fine) {
+  .quiz-card:hover {
+    border-color: #afa9ec;
+    background: #eeedfe;
+  }
 }
 
 .quiz-card.correct {
