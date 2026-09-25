@@ -102,19 +102,33 @@
         <el-button size="small" @click="skip">跳过</el-button>
         <el-button size="small" type="danger" plain @click="stopQuiz">结束</el-button>
         <el-button size="small" @click="replayQuestion">🔊 重播</el-button>
+        <span class="romaji-switch">
+          <el-switch v-model="showRomaji" size="small" />
+          <span>罗马音</span>
+        </span>
+        <el-radio-group v-model="gridOrder" size="small">
+          <el-radio-button value="sorted">排序</el-radio-button>
+          <el-radio-button value="shuffled">乱序</el-radio-button>
+        </el-radio-group>
       </div>
-      <div class="quiz-grid">
+      <div class="quiz-grid" :class="{ 'grid-sorted': gridOrder === 'sorted' }">
         <div
           v-for="item in quizPool"
           :key="displayChar(item, script)"
           class="quiz-card"
           :class="[...(highlight[displayChar(item, script)] ? [highlight[displayChar(item, script)]] : [])]"
           @click="answer(item)">
-          {{ displayChar(item, script) }}
+          <div class="card-kana">{{ displayChar(item, script) }}</div>
+          <div v-if="showRomaji" class="card-romaji">{{ item.romaji }}</div>
         </div>
       </div>
-      <div v-if="revealed" class="reveal-tip">
-        本题答案：<strong>{{ answeredChar }}</strong>
+      <div v-if="revealed || lastAnswer" class="reveal-tip" :class="{ 'reveal-wrong': lastAnswer && !lastAnswerCorrect }">
+        <template v-if="revealed || lastAnswerCorrect">
+          答案：<strong>{{ answeredChar }}</strong> ({{ currentRomaji }})
+        </template>
+        <template v-else>
+          选了 <strong>{{ lastAnswerChar }}</strong> ({{ lastAnswerRomaji }})，正确 <strong>{{ answeredChar }}</strong> ({{ currentRomaji }})
+        </template>
       </div>
     </div>
 
@@ -178,6 +192,10 @@ const solved = ref(false);
 const highlight = ref<Record<string, "correct" | "wrong">>({});
 const revealed = ref(false);
 const answeredChar = ref("");
+const showRomaji = ref(false);
+const lastAnswer = ref<KanaItem | null>(null);
+const lastAnswerCorrect = ref(false);
+const gridOrder = ref<"sorted" | "shuffled">("shuffled");
 
 const ALL_LABELS = KANA_GROUPS.map(g => g.label);
 const BASIC_LABELS = KANA_GROUPS.slice(0, 11).map(g => g.label);
@@ -214,6 +232,10 @@ const pool = computed<KanaItem[]>(() =>
 )
 
 const maxCount = computed(() => pool.value.length)
+
+const currentRomaji = computed(() => current.value?.romaji ?? "")
+const lastAnswerChar = computed(() => lastAnswer.value ? displayChar(lastAnswer.value, script.value) : "")
+const lastAnswerRomaji = computed(() => lastAnswer.value?.romaji ?? "")
 
 const dictCount = computed(() =>
   countSel.value === "custom"
@@ -282,7 +304,7 @@ function start() {
     correctCount.value = 0
     totalCount.value = 0
     solved.value = false
-    quizPool.value = shuffle(pool.value)
+    quizPool.value = gridOrder.value === "sorted" ? [...pool.value] : shuffle(pool.value)
     finished.value = false
     running.value = true
     newQuestion()
@@ -332,6 +354,8 @@ function newQuestion() {
   current.value = next
   solved.value = false
   revealed.value = false
+  lastAnswer.value = null
+  lastAnswerCorrect.value = false
   answeredChar.value = displayChar(next, script.value)
   playQuestion(next)
   clearSchedule()
@@ -357,6 +381,9 @@ function answer(item: KanaItem) {
   const answerChar = displayChar(current.value, script.value)
   const isCorrect = item.romaji === current.value.romaji
   solved.value = true
+  lastAnswer.value = item
+  lastAnswerCorrect.value = isCorrect
+  revealed.value = false
   clearSchedule()
   if (isCorrect) {
     highlight.value = char === answerChar
@@ -368,13 +395,15 @@ function answer(item: KanaItem) {
   } else {
     highlight.value = { [char]: "wrong", [answerChar]: "correct" }
     totalCount.value += 1
-    timer = setTimeout(newQuestion, 1200)
+    timer = setTimeout(newQuestion, 1600)
   }
 }
 
 function reveal() {
   if (!running.value || !current.value) return
   revealed.value = true
+  lastAnswer.value = null
+  lastAnswerCorrect.value = false
   answeredChar.value = displayChar(current.value, script.value)
   highlight.value = { [answeredChar.value]: "correct" }
 }
@@ -412,6 +441,11 @@ function reset() {
 }
 
 watch([mode, script], () => reset())
+
+watch(gridOrder, (order) => {
+  if (!running.value) return
+  quizPool.value = order === "sorted" ? [...pool.value] : shuffle(pool.value)
+})
 
 onUnmounted(() => {
   clearSchedule()
@@ -558,11 +592,14 @@ html.dark .group-card.active {
   gap: 8px;
 }
 
+.quiz-grid.grid-sorted {
+  grid-template-columns: repeat(5, 1fr);
+}
+
 .quiz-card {
   border: 1px solid var(--border);
   border-radius: 8px;
-  padding: 14px 8px;
-  font-size: 26px;
+  padding: 10px 4px;
   text-align: center;
   cursor: pointer;
   background: var(--bg-card);
@@ -571,6 +608,26 @@ html.dark .group-card.active {
   user-select: none;
   touch-action: manipulation;
   -webkit-tap-highlight-color: transparent;
+}
+
+.card-kana {
+  font-size: 26px;
+  line-height: 1.3;
+}
+
+.card-romaji {
+  font-size: 11px;
+  color: var(--text-muted);
+  line-height: 1.3;
+  margin-top: 2px;
+}
+
+.romaji-switch {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  color: var(--text-secondary);
 }
 
 @media (hover: hover) and (pointer: fine) {
@@ -604,6 +661,10 @@ html.dark .group-card.active {
   margin-top: 14px;
   font-size: 18px;
   color: var(--text);
+}
+
+.reveal-tip.reveal-wrong {
+  color: var(--wrong-text);
 }
 
 .answer-list {
