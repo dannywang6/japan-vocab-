@@ -171,7 +171,7 @@ import { ElMessage } from "element-plus";
 type Mode = "quiz" | "dictation";
 type Script = "hiragana" | "katakana";
 
-const mode = ref<Mode>("dictation");
+const mode = ref<Mode>("quiz");
 const script = ref<Script>("hiragana");
 const speaker = ref(0);
 const selectedGroups = ref<string[]>(KANA_GROUPS.slice(0, 11).map(g => g.label));
