@@ -1,9 +1,19 @@
 <template>
+  <!--
+    听写主页 = 总调度。它本身不含任何游戏逻辑，只做三件事：
+      1. 顶部模式切换（测验/听写/拼写）+ 平假名/片假名切换
+      2. 会话没开始时 → 显示"设置区"（选行、数量、发音人、开始按钮）
+      3. 点"开始"后 → sessionActive 翻成 true，按当前模式渲染对应的那个子面板
+    核心是 sessionActive 这把"锁"：false = 设置区 / true = 面板区，
+    两个分区靠 v-if / v-else-if / v-else 互斥显示。
+  -->
   <div class="dictation-page">
     <div class="mode-switch">
+      <!-- mode = 选功能（决定渲染哪个面板）；script = 选平/片（传给子面板决定显示哪种字） -->
       <el-radio-group v-model="mode" size="large">
         <el-radio-button value="quiz">测验模式</el-radio-button>
         <el-radio-button value="dictation">听写模式</el-radio-button>
+        <el-radio-button value="spelling">拼写模式</el-radio-button>
       </el-radio-group>
       <el-radio-group v-model="script" size="large" style="margin-left: 12px">
         <el-radio-button value="hiragana">平假名</el-radio-button>
@@ -11,30 +21,15 @@
       </el-radio-group>
     </div>
 
-    <!-- 设置区 -->
-    <div v-if="!running && !finished" class="panel">
+    <!-- 设置区：会话没开始时显示。从上到下：选行 → 数量（仅听写/拼写）→ 发音人（拼写不显示）→ 开始按钮 -->
+    <div v-if="!sessionActive" class="panel">
       <div class="section-title">选择要听写的假名（可按行多选）</div>
-      <div class="quick-row">
-        <el-button size="small" @click="applyGroups(BASIC_LABELS)">基础</el-button>
-        <el-button size="small" @click="applyGroups(DAKUON_LABELS)">浊音</el-button>
-        <el-button size="small" @click="applyGroups(YOUON_LABELS)">拗音</el-button>
-        <el-button size="small" @click="applyGroups(ALL_LABELS)">全选</el-button>
-        <el-button size="small" @click="applyGroups([])">清空</el-button>
-        <el-tag size="small" type="info" effect="plain">已选 {{ pool.length }} 个</el-tag>
-      </div>
-      <div class="group-grid">
-        <div
-          v-for="group in KANA_GROUPS"
-          :key="group.label"
-          class="group-card"
-          :class="{ active: isGroupSelected(group.label) }"
-          @click="toggleGroup(group.label)">
-          <div class="group-label">{{ groupLabel(group, script) }}</div>
-          <div class="group-kana">{{ group.items.map(i => displayChar(i, script)).join(' ') }}</div>
-        </div>
-      </div>
+      <!-- 选组组件：v-model:selectedGroups 是"双向绑定"简写 = :selectedGroups + @update:selectedGroups 两个绑定 -->
+      <!-- 子组件不自己存选择，点它 → 它 emit 新数组 → 这里改 selectedGroups → 回传显示，这就是"受控组件" -->
+      <KanaGroupGrid v-model:selectedGroups="selectedGroups" :script="script" />
 
-      <div v-if="mode === 'dictation'" class="row">
+      <!-- 数量选择：quiz 模式下一次出一道题、不限制总题数，所以只有 dictation/spelling 才显示 -->
+      <div v-if="mode === 'dictation' || mode === 'spelling'" class="row">
         <div class="row-label">听写数量</div>
         <el-radio-group v-model="countSel" size="default">
           <el-radio-button value="all">全部 ({{ maxCount }})</el-radio-button>
@@ -45,14 +40,15 @@
           <el-radio-button value="custom">自定义</el-radio-button>
         </el-radio-group>
         <el-input-number
-          v-if="countSel === 'custom'"
-          v-model="customCount"
-          :min="1"
-          :max="maxCount"
-          style="margin-left: 12px" />
+            v-if="countSel === 'custom'"
+            v-model="customCount"
+            :min="1"
+            :max="maxCount"
+            style="margin-left: 12px" />
       </div>
 
-      <div class="row">
+      <!-- 发音人：挑谁来读音频。拼写模式不打字（不发音），所以拼写时不显示这行 -->
+      <div v-if="mode !== 'spelling'" class="row">
         <div class="row-label">发音人</div>
         <el-radio-group v-model="speaker" size="default">
           <el-radio-button v-for="s in SPEAKERS" :key="s.id" :value="s.id">
@@ -62,181 +58,89 @@
       </div>
 
       <el-button
-        type="primary"
-        size="large"
-        :disabled="pool.length === 0"
-        @click="start">
-        {{ mode === 'dictation' ? '开始听写' : '开始测验' }}
+          type="primary"
+          size="large"
+          :disabled="pool.length === 0"
+          @click="start">
+        {{ startLabel }}
       </el-button>
+      <!-- pool 为空 = 一行都没勾，按钮禁用并给提示 -->
       <el-alert
-        v-if="pool.length === 0"
-        type="warning"
-        :closable="false"
-        title="请至少选择一行的假名"
-        style="margin-top: 12px" />
+          v-if="pool.length === 0"
+          type="warning"
+          :closable="false"
+          title="请至少选择一行的假名"
+          style="margin-top: 12px" />
     </div>
 
-    <!-- 听写播放中 -->
-    <div v-else-if="running && mode === 'dictation'" class="panel center">
-      <div class="progress-text">第 {{ index + 1 }} / {{ order.length }} 题</div>
-      <el-tag v-if="rep === 1" type="warning" effect="plain" style="margin-top: 10px">第 1 遍</el-tag>
-      <el-tag v-else type="success" effect="plain" style="margin-top: 10px">第 2 遍</el-tag>
-      <el-progress
-        :percentage="Math.round(((index + 1) / Math.max(order.length, 1)) * 100)"
-        :stroke-width="12"
-        style="max-width: 480px; margin: 16px 0" />
-      <div class="play-light" :class="{ on: playingNow }">🔊 播放中…</div>
-      <div class="btn-row">
-        <el-button @click="replayCurrent">🔁 重播本题</el-button>
-        <el-button @click="replayAll">重播全部</el-button>
-        <el-button type="danger" plain @click="stop">停止</el-button>
-      </div>
-    </div>
-
-    <!-- 测验进行中 -->
-    <div v-else-if="running && mode === 'quiz'" class="panel center">
-      <div class="score-bar">
-        <el-tag type="success">正确 {{ correctCount }}</el-tag>
-        <el-tag type="danger">错误 {{ totalCount - correctCount }}</el-tag>
-        <el-button size="small" @click="reveal">答案</el-button>
-        <el-button size="small" @click="skip">跳过</el-button>
-        <el-button size="small" type="danger" plain @click="stopQuiz">结束</el-button>
-        <el-button size="small" @click="replayQuestion">🔊 重播</el-button>
-        <span class="romaji-switch">
-          <el-switch v-model="showRomaji" size="small" />
-          <span>罗马音</span>
-        </span>
-        <el-radio-group v-model="gridOrder" size="small">
-          <el-radio-button value="sorted">排序</el-radio-button>
-          <el-radio-button value="shuffled">乱序</el-radio-button>
-        </el-radio-group>
-      </div>
-      <div class="quiz-grid" :class="{ 'grid-sorted': gridOrder === 'sorted' }">
-        <div
-          v-for="item in quizPool"
-          :key="displayChar(item, script)"
-          class="quiz-card"
-          :class="[...(highlight[displayChar(item, script)] ? [highlight[displayChar(item, script)]] : [])]"
-          @click="answer(item)">
-          <div class="card-kana">{{ displayChar(item, script) }}</div>
-          <div v-if="showRomaji" class="card-romaji">{{ item.romaji }}</div>
-        </div>
-      </div>
-      <div v-if="revealed || lastAnswer" class="reveal-tip" :class="{ 'reveal-wrong': lastAnswer && !lastAnswerCorrect }">
-        <template v-if="revealed || lastAnswerCorrect">
-          答案：<strong>{{ answeredChar }}</strong> ({{ currentRomaji }})
-        </template>
-        <template v-else>
-          选了 <strong>{{ lastAnswerChar }}</strong> ({{ lastAnswerRomaji }})，正确 <strong>{{ answeredChar }}</strong> ({{ currentRomaji }})
-        </template>
-      </div>
-    </div>
-
-    <!-- 听写结果 -->
-    <div v-else-if="finished && mode === 'dictation'" class="panel">
-      <el-alert type="success" :closable="false" title="听写完毕，对照下面的顺序检查你写的答案吧" />
-      <div class="answer-list">
-        <div v-for="(item, i) in order" :key="i" class="answer-row">
-          <span class="answer-no">{{ i + 1 }}</span>
-          <span class="answer-kana">{{ item.h }} / {{ item.k }}</span>
-          <span class="answer-romaji">{{ item.romaji }}</span>
-          <span class="answer-row-label">{{ groupLabelOf(item) }}</span>
-          <el-button size="small" text type="primary" @click="replayItem(item)">🔊</el-button>
-        </div>
-      </div>
-      <div class="btn-row">
-        <el-button @click="replayAll">再放一遍</el-button>
-        <el-button type="primary" @click="reset">重新听写</el-button>
-      </div>
-    </div>
-
-    <!-- 测验结果 -->
-    <div v-else-if="finished && mode === 'quiz'" class="panel center">
-      <el-result icon="success" title="测验结束">
-        <template #sub-title>
-          正确 {{ correctCount }} / {{ totalCount }}
-        </template>
-      </el-result>
-      <el-button type="primary" @click="reset">再来一次</el-button>
-    </div>
+    <!-- 三个功能面板按模式切换：每次只渲染一个。父页把题目池和设置通过 props 传给对应面板 -->
+    <!-- 测验面板：传 题目池/平片/发音人；监听 @reset（用户点"再来一次"）→ 回设置区 -->
+    <KanaQuizPanel v-else-if="mode === 'quiz'" ref="quizPanel"
+        :pool="pool" :script="script" :speaker="speaker"
+        @reset="sessionActive = false" />
+    <!-- 听写面板：多传一个题数 dictCount；@quit=中途按"停止"，@reset=听完后按"重新听写" -->
+    <KanaDictationPanel v-else-if="mode === 'dictation'" ref="dictPanel"
+        :pool="pool" :script="script" :speaker="speaker" :count="dictCount"
+        @quit="sessionActive = false" @reset="sessionActive = false" />
+    <!-- 拼写面板：纯打字不发音，所以没有 speaker -->
+    <KanaSpellingPanel v-else ref="spellPanel"
+        :pool="pool" :script="script" :count="dictCount"
+        @reset="sessionActive = false" />
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed, onUnmounted, ref, watch } from "vue";
-import { KANA_GROUPS, SPEAKERS, audioUrl, displayChar, groupLabel } from "../utils/kana";
-import type { KanaItem } from "../utils/kana";
-import { ElMessage } from "element-plus";
+// ---------- 导入 ----------
+import { computed, nextTick, ref, watch } from "vue";
+// KANA_GROUPS = 26 个"行"的常量数组（每行含平/片/音标/行名），SPEAKERS = 可选发音人
+import { KANA_GROUPS, SPEAKERS } from "../utils/kana";
+// Script 是 "hiragana" | "katakana" 的字面量联合类型，保证 script 只能这两个值之一
+import type { Script } from "../utils/kana";
+// 三个功能面板 + 选组组件
+import KanaGroupGrid from "../components/KanaGroupGrid.vue";
+import KanaQuizPanel from "../components/KanaQuizPanel.vue";
+import KanaDictationPanel from "../components/KanaDictationPanel.vue";
+import KanaSpellingPanel from "../components/KanaSpellingPanel.vue";
 
-type Mode = "quiz" | "dictation";
-type Script = "hiragana" | "katakana";
+// mode 只允许这三个值，模板里用 v-else-if / v-else 逐一对应到某个面板
+type Mode = "quiz" | "dictation" | "spelling";
 
+// ---------- 用户设置（设置区改的全是这几个 ref） ----------
+// 当前功能模式：测验 / 听写 / 拼写
 const mode = ref<Mode>("quiz");
+// 平假名 or 片假名：决定子面板用平假名显示还是片假名显示
 const script = ref<Script>("hiragana");
+// 发音人下标（对应 SPEAKERS 数组的 id）。听写/测验用，拼写不发音用不到
 const speaker = ref(0);
+// 已勾选的行名（如 ["あ行","か行"]）。v-model:selectedGroups 和 KanaGroupGrid 双向同步
 const selectedGroups = ref<string[]>(KANA_GROUPS.slice(0, 11).map(g => g.label));
+// 数量档位：all / 5 / 10 / 15 / 20 / custom
 const countSel = ref<string>("all");
+// 选 custom 档时手动输入的数量
 const customCount = ref(5);
+// 会话锁：false=显示设置区 / true=已点开始、显示对应面板。切模式/平片会把它砸回 false
+const sessionActive = ref(false);
 
-const running = ref(false);
-const finished = ref(false);
-const order = ref<KanaItem[]>([]);
-const index = ref(0);
-const playingNow = ref(false);
+// ---------- 三个面板的"遥控器"引用 ----------
+// InstanceType<typeof 组件> = 该组件实例的类型（也算教学点：模板 ref 拿到的就是实例对象）
+// 因为面板是 v-if 条件渲染的，组件挂载前这个引用是 undefined，所以类型带 ?（可能为空），
+// 调用方法时要写 .value?.xxx() 做空值保护
+const quizPanel = ref<InstanceType<typeof KanaQuizPanel>>();
+const dictPanel = ref<InstanceType<typeof KanaDictationPanel>>();
+const spellPanel = ref<InstanceType<typeof KanaSpellingPanel>>();
 
-const correctCount = ref(0);
-const totalCount = ref(0);
-const current = ref<KanaItem | null>(null);
-const quizPool = ref<KanaItem[]>([]);
-const solved = ref(false);
-const highlight = ref<Record<string, "correct" | "wrong">>({});
-const revealed = ref(false);
-const answeredChar = ref("");
-const showRomaji = ref(false);
-const lastAnswer = ref<KanaItem | null>(null);
-const lastAnswerCorrect = ref(false);
-const gridOrder = ref<"sorted" | "shuffled">("shuffled");
-
-const ALL_LABELS = KANA_GROUPS.map(g => g.label);
-const BASIC_LABELS = KANA_GROUPS.slice(0, 11).map(g => g.label);
-const DAKUON_LABELS = KANA_GROUPS.slice(11, 16).map(g => g.label);
-const YOUON_LABELS = KANA_GROUPS.slice(16).map(g => g.label);
-
-let audio: HTMLAudioElement | null = null;
-let timer: ReturnType<typeof setTimeout> | null = null;
-
-const isGroupSelected = (label: string) => selectedGroups.value.includes(label);
-
-function toggleGroup(label: string) {
-  if (selectedGroups.value.includes(label)) {
-    if (selectedGroups.value.length === 1) return
-    selectedGroups.value = selectedGroups.value.filter(l => l !== label)
-  } else {
-    selectedGroups.value = [...selectedGroups.value, label]
-  }
-  if (countSel.value === 'custom' && customCount.value > maxCount.value) {
-    customCount.value = maxCount.value
-  }
-}
-
-function applyGroups(labels: string[]) {
-  selectedGroups.value = labels
-  if (countSel.value === 'custom' && customCount.value > maxCount.value) {
-    customCount.value = maxCount.value
-  }
-}
-
-const pool = computed<KanaItem[]>(() =>
+// ---------- 计算属性（不存新状态，由上面的设置推导） ----------
+// 题目池：把已勾选各行的 items 全部摊平成一个一维数组
+const pool = computed(() =>
   KANA_GROUPS.filter(g => selectedGroups.value.includes(g.label))
     .flatMap(g => g.items)
 )
 
+// 池子大小 = "全部"那一档显示的数字
 const maxCount = computed(() => pool.value.length)
 
-const currentRomaji = computed(() => current.value?.romaji ?? "")
-const lastAnswerChar = computed(() => lastAnswer.value ? displayChar(lastAnswer.value, script.value) : "")
-const lastAnswerRomaji = computed(() => lastAnswer.value?.romaji ?? "")
-
+// 最终听写/拼写的题数：custom 用输入值；其他档用 Math.min 夹住，
+// 避免数量比池子还大（例如只剩 3 个可练却选了 10）
 const dictCount = computed(() =>
   countSel.value === "custom"
     ? Math.min(customCount.value, maxCount.value)
@@ -245,212 +149,32 @@ const dictCount = computed(() =>
       : Math.min(Number(countSel.value), maxCount.value)
 )
 
-function shuffle<T>(arr: T[]): T[] {
-  const a = [...arr]
-  for (let i = a.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1))
-    ;[a[i], a[j]] = [a[j], a[i]]
+// 开始按钮文案随模式变化
+const startLabel = computed(() =>
+  mode.value === "dictation" ? "开始听写"
+    : mode.value === "spelling" ? "开始拼写"
+      : "开始测验")
+
+// ---------- 开始 ----------
+// 流程三步：①锁上设置区 ②面板是 v-if 刚渲染的，必须 await nextTick() 等它占好一位，
+// ref 才能拿到实例；否则此时 panelRef.value 还是 undefined ③按模式调对应面板的 start()
+async function start() {
+  if (pool.value.length === 0) return            // 一行都没勾，不开始
+  sessionActive.value = true
+  await nextTick()
+  if (mode.value === "quiz") quizPanel.value?.start()
+  else if (mode.value === "dictation") dictPanel.value?.start()
+  else spellPanel.value?.start()
+}
+
+// 用户在中途切换 mode 或 script → 强制回设置区，让新选择从头生效
+watch([mode, script], () => { sessionActive.value = false })
+
+// 选组变化后，若正用"自定义数量"且手输值超了新池子，钳制到池子上限
+watch(selectedGroups, () => {
+  if (countSel.value === 'custom' && customCount.value > maxCount.value) {
+    customCount.value = maxCount.value
   }
-  return a
-}
-
-const rep = ref(1);
-
-function play(kana: KanaItem) {
-  rep.value = 1
-  playOnce(kana)
-  clearSchedule()
-  timer = setTimeout(() => {
-    if (!running.value) return
-    rep.value = 2
-    playOnce(kana)
-    clearSchedule()
-    timer = setTimeout(() => {
-      if (running.value) nextInDictation()
-    }, 2000)
-  }, 2000)
-}
-
-function playOnce(kana: KanaItem) {
-  playingNow.value = true
-  if (audio) {
-    audio.src = audioUrl(speaker.value, kana.romaji)
-    audio.play().catch(() => {
-      ElMessage.warning("音频播放被浏览器拦截，请先点击页面任意位置")
-      playingNow.value = false
-    })
-  } else {
-    audio = new Audio(audioUrl(speaker.value, kana.romaji))
-    audio.play()
-  }
-}
-
-function clearSchedule() {
-  if (timer) {
-    clearTimeout(timer)
-    timer = null
-  }
-}
-
-function start() {
-  if (pool.value.length === 0) return
-  if (mode.value === "dictation") {
-    order.value = shuffle(pool.value).slice(0, dictCount.value)
-    index.value = 0
-    finished.value = false
-    running.value = true
-    play(order.value[0])
-  } else {
-    correctCount.value = 0
-    totalCount.value = 0
-    solved.value = false
-    quizPool.value = gridOrder.value === "sorted" ? [...pool.value] : shuffle(pool.value)
-    finished.value = false
-    running.value = true
-    newQuestion()
-  }
-}
-
-function nextInDictation() {
-  index.value += 1
-  if (index.value >= order.value.length) {
-    playingNow.value = false
-    running.value = false
-    finished.value = true
-    return
-  }
-  play(order.value[index.value])
-}
-
-function replayCurrent() {
-  if (order.value[index.value]) play(order.value[index.value])
-}
-
-function replayAll() {
-  if (order.value.length === 0) return
-  index.value = 0
-  finished.value = false
-  running.value = true
-  play(order.value[0])
-}
-
-function stop() {
-  clearSchedule()
-  if (audio) audio.pause()
-  playingNow.value = false
-  running.value = false
-}
-
-function newQuestion() {
-  const poolArr = pool.value
-  if (poolArr.length === 0) return
-  let next = poolArr[Math.floor(Math.random() * poolArr.length)]
-  if (current.value && poolArr.length > 1) {
-    let guard = 0
-    while (next.romaji === current.value.romaji && guard++ < 10) {
-      next = poolArr[Math.floor(Math.random() * poolArr.length)]
-    }
-  }
-  current.value = next
-  solved.value = false
-  revealed.value = false
-  lastAnswer.value = null
-  lastAnswerCorrect.value = false
-  answeredChar.value = displayChar(next, script.value)
-  playQuestion(next)
-  clearSchedule()
-  timer = setTimeout(() => {
-    highlight.value = {}
-  }, 600)
-}
-
-function playQuestion(kana: KanaItem) {
-  playingNow.value = true
-  if (audio) {
-    audio.src = audioUrl(speaker.value, kana.romaji)
-    audio.play().catch(() => {})
-  } else {
-    audio = new Audio(audioUrl(speaker.value, kana.romaji))
-    audio.play()
-  }
-}
-
-function answer(item: KanaItem) {
-  if (!running.value || mode.value !== "quiz" || !current.value || solved.value) return
-  const char = displayChar(item, script.value)
-  const answerChar = displayChar(current.value, script.value)
-  const isCorrect = item.romaji === current.value.romaji
-  solved.value = true
-  lastAnswer.value = item
-  lastAnswerCorrect.value = isCorrect
-  revealed.value = false
-  clearSchedule()
-  if (isCorrect) {
-    highlight.value = char === answerChar
-      ? { [char]: "correct" }
-      : { [char]: "correct", [answerChar]: "correct" }
-    correctCount.value += 1
-    totalCount.value += 1
-    timer = setTimeout(newQuestion, 1200)
-  } else {
-    highlight.value = { [char]: "wrong", [answerChar]: "correct" }
-    totalCount.value += 1
-    timer = setTimeout(newQuestion, 1600)
-  }
-}
-
-function reveal() {
-  if (!running.value || !current.value) return
-  revealed.value = true
-  lastAnswer.value = null
-  lastAnswerCorrect.value = false
-  answeredChar.value = displayChar(current.value, script.value)
-  highlight.value = { [answeredChar.value]: "correct" }
-}
-
-function skip() {
-  if (!running.value) return
-  clearSchedule()
-  newQuestion()
-}
-
-function stopQuiz() {
-  clearSchedule()
-  playingNow.value = false
-  running.value = false
-  finished.value = true
-}
-
-function replayQuestion() {
-  if (running.value && current.value) playQuestion(current.value)
-}
-
-function groupLabelOf(item: KanaItem): string {
-  return KANA_GROUPS.find(g => g.items.includes(item))?.label ?? ""
-}
-
-function replayItem(item: KanaItem) {
-  playOnce(item)
-}
-
-function reset() {
-  stop()
-  finished.value = false
-  current.value = null
-  highlight.value = {}
-}
-
-watch([mode, script], () => reset())
-
-watch(gridOrder, (order) => {
-  if (!running.value) return
-  quizPool.value = order === "sorted" ? [...pool.value] : shuffle(pool.value)
-})
-
-onUnmounted(() => {
-  clearSchedule()
-  if (audio) audio.pause()
-  audio = null
 })
 </script>
 
@@ -469,69 +193,11 @@ onUnmounted(() => {
   padding: 20px;
 }
 
-.panel.center {
-  text-align: center;
-}
-
 .section-title {
   font-size: 15px;
   font-weight: 500;
   color: var(--text);
   margin-bottom: 12px;
-}
-
-.group-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
-  gap: 10px;
-  margin-bottom: 16px;
-}
-
-.quick-row {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin-bottom: 12px;
-}
-
-.group-card {
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  padding: 10px 12px;
-  cursor: pointer;
-  transition: border-color 0.15s, background 0.15s;
-  touch-action: manipulation;
-  -webkit-tap-highlight-color: transparent;
-}
-
-.group-card.active {
-  border-color: #534ab7;
-  background: #fbfbff;
-}
-
-html.dark .group-card.active {
-  background: var(--mode-active-bg);
-}
-
-@media (hover: hover) and (pointer: fine) {
-  .group-card:hover {
-    border-color: #534ab7;
-  }
-}
-
-.group-label {
-  font-size: 13px;
-  font-weight: 500;
-  color: var(--text);
-  margin-bottom: 4px;
-}
-
-.group-kana {
-  font-size: 12px;
-  color: var(--text-muted);
-  word-break: break-all;
-  line-height: 1.6;
 }
 
 .row {
@@ -546,163 +212,5 @@ html.dark .group-card.active {
   font-size: 14px;
   color: var(--text-secondary);
   margin-right: 4px;
-}
-
-.progress-text {
-  font-size: 28px;
-  font-weight: 500;
-  color: var(--text);
-}
-
-.play-light {
-  font-size: 16px;
-  color: var(--text-muted);
-  margin-bottom: 12px;
-}
-
-.play-light.on {
-  animation: blink 1s ease-in-out infinite;
-}
-
-@keyframes blink {
-  0%, 100% { opacity: 0.3; }
-  50% { opacity: 1; }
-}
-
-.btn-row {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-  justify-content: center;
-  margin-top: 14px;
-}
-
-.score-bar {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-  flex-wrap: wrap;
-  margin-bottom: 16px;
-}
-
-.quiz-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(72px, 1fr));
-  gap: 8px;
-}
-
-.quiz-grid.grid-sorted {
-  grid-template-columns: repeat(5, 1fr);
-}
-
-.quiz-card {
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  padding: 10px 4px;
-  text-align: center;
-  cursor: pointer;
-  background: var(--bg-card);
-  color: var(--text);
-  transition: background 0.6s ease, border-color 0.6s ease, color 0.6s ease, transform 0.2s ease;
-  user-select: none;
-  touch-action: manipulation;
-  -webkit-tap-highlight-color: transparent;
-}
-
-.card-kana {
-  font-size: 26px;
-  line-height: 1.3;
-}
-
-.card-romaji {
-  font-size: 11px;
-  color: var(--text-muted);
-  line-height: 1.3;
-  margin-top: 2px;
-}
-
-.romaji-switch {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  font-size: 12px;
-  color: var(--text-secondary);
-}
-
-@media (hover: hover) and (pointer: fine) {
-  .quiz-card:hover {
-    border-color: #afa9ec;
-    background: #eeedfe;
-  }
-}
-
-.quiz-card.correct {
-  background: var(--correct-bg);
-  border-color: var(--correct-border);
-  color: var(--correct-text);
-  animation: pop 0.25s ease;
-}
-
-.quiz-card.wrong {
-  background: var(--wrong-bg);
-  border-color: var(--wrong-border);
-  color: var(--wrong-text);
-  animation: pop 0.25s ease;
-}
-
-@keyframes pop {
-  0% { transform: scale(1); }
-  50% { transform: scale(1.12); }
-  100% { transform: scale(1); }
-}
-
-.reveal-tip {
-  margin-top: 14px;
-  font-size: 18px;
-  color: var(--text);
-}
-
-.reveal-tip.reveal-wrong {
-  color: var(--wrong-text);
-}
-
-.answer-list {
-  margin-top: 16px;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.answer-row {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 8px 12px;
-  border: 1px solid var(--border);
-  border-radius: 8px;
-}
-
-.answer-no {
-  font-size: 13px;
-  color: var(--text-muted);
-  min-width: 24px;
-}
-
-.answer-kana {
-  font-size: 24px;
-  font-weight: 500;
-  color: var(--text);
-}
-
-.answer-romaji {
-  font-size: 15px;
-  color: var(--text-secondary);
-}
-
-.answer-row-label {
-  margin-left: auto;
-  font-size: 12px;
-  color: var(--text-muted);
 }
 </style>

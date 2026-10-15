@@ -15,7 +15,7 @@
           <el-icon><EditPen /></el-icon>练习
         </el-menu-item>
         <el-menu-item index="/dictation">
-          <el-icon><Headset /></el-icon>假名听写
+          <el-icon><Headset /></el-icon>假名测试
         </el-menu-item>
         <el-menu-item index="/review">
           <el-icon><Clock /></el-icon>复习计划

@@ -73,3 +73,20 @@ export function displayChar(item: KanaItem, script: 'hiragana' | 'katakana'): st
 export function groupLabel(group: KanaGroup, script: 'hiragana' | 'katakana'): string {
   return script === 'katakana' ? group.kLabel : group.label
 }
+
+//打乱假名显示顺序
+export function shuffle<T>(arr: T[]): T[] {
+  const a = [...arr]
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1))
+    ;[a[i], a[j]] = [a[j], a[i]]
+  }
+  return a
+}
+
+//查假名属于哪一行
+export function groupLabelOf(item: KanaItem): string {
+  return KANA_GROUPS.find(g => g.items.includes(item))?.label ?? ""
+}
+
+export type Script = "hiragana" | "katakana";
