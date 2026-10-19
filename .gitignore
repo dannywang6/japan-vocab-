@@ -3,3 +3,14 @@
 docker-project/backend/app.jar
 docker-project/frontend/dist/
 .env
+
+# IDE 配置文件（每个人本机的窗口布局/JDK路径都不同，不进版本库）
+.idea/
+*.iml
+
+# Java 构建产物
+JP_project/target/
+
+# Node 依赖与构建产物
+jp-frontend/node_modules/
+jp-frontend/dist/
