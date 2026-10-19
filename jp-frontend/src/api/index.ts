@@ -7,7 +7,7 @@ import type {
     QuizResult,
     SubmitPayload,
     TodayReview,
-    PageResult
+    PageResult, KanaSessionPayload
 } from "../types";
 import {ElMessage} from "element-plus";
 
@@ -76,3 +76,7 @@ export const searchVocabulary = (keyword: string): Promise<ApiResponse<Vocabular
 //分页查询
 export const getVocabularyPage = (params: { keyword?: string; page?: number; size?: number }): Promise<ApiResponse<PageResult<Vocabulary>>> =>
     request.get('/api/vocabularies/page', { params })
+
+//假名测试易错统计
+export const submitKanaSession = (data: KanaSessionPayload): Promise<ApiResponse<null>> =>
+    request.post(`/api/kana/mistakes/session`, data)

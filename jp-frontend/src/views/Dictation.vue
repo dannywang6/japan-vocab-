@@ -77,15 +77,17 @@
     <!-- 测验面板：传 题目池/平片/发音人；监听 @reset（用户点"再来一次"）→ 回设置区 -->
     <KanaQuizPanel v-else-if="mode === 'quiz'" ref="quizPanel"
         :pool="pool" :script="script" :speaker="speaker"
-        @reset="sessionActive = false" />
+        @reset="sessionActive = false"
+        @finished="onFinished" />
     <!-- 听写面板：多传一个题数 dictCount；@quit=中途按"停止"，@reset=听完后按"重新听写" -->
     <KanaDictationPanel v-else-if="mode === 'dictation'" ref="dictPanel"
         :pool="pool" :script="script" :speaker="speaker" :count="dictCount"
-        @quit="sessionActive = false" @reset="sessionActive = false" />
+        @quit="sessionActive = false" @reset="sessionActive = false"/>
     <!-- 拼写面板：纯打字不发音，所以没有 speaker -->
     <KanaSpellingPanel v-else ref="spellPanel"
         :pool="pool" :script="script" :count="dictCount"
-        @reset="sessionActive = false" />
+        @reset="sessionActive = false"
+        @finished="onFinished" />
   </div>
 </template>
 
@@ -96,6 +98,8 @@ import { computed, nextTick, ref, watch } from "vue";
 import { KANA_GROUPS, SPEAKERS } from "../utils/kana";
 // Script 是 "hiragana" | "katakana" 的字面量联合类型，保证 script 只能这两个值之一
 import type { Script } from "../utils/kana";
+import { submitKanaSession } from "../api";
+import type{ KanaAnswer } from "../types";
 // 三个功能面板 + 选组组件
 import KanaGroupGrid from "../components/KanaGroupGrid.vue";
 import KanaQuizPanel from "../components/KanaQuizPanel.vue";
@@ -165,6 +169,13 @@ async function start() {
   if (mode.value === "quiz") quizPanel.value?.start()
   else if (mode.value === "dictation") dictPanel.value?.start()
   else spellPanel.value?.start()
+}
+
+function onFinished(results: KanaAnswer[]) {
+  if (results.length === 0) return
+  const payload = { items: results }
+  console.log("后端数据:", payload)
+  submitKanaSession(payload).catch(() => {})
 }
 
 // 用户在中途切换 mode 或 script → 强制回设置区，让新选择从头生效

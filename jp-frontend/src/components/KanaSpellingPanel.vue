@@ -74,12 +74,16 @@ import { nextTick, onUnmounted, ref } from "vue";
 import { ElInput } from "element-plus";
 import { displayChar, groupLabelOf, shuffle } from "../utils/kana";
 import type { KanaItem, Script } from "../utils/kana";
+import type { KanaAnswer } from "../types";
 
 // ---------- 组件接口 ----------
 // props：pool=题目池，script=平/片（决定题干显示平假名 or 片假名），count=拼多少题
 const props = defineProps<{ pool: KanaItem[]; script: Script; count: number }>();
 // emit：只有 "reset"，结果页"再来一轮"时通知父页回设置区
-const emit = defineEmits<{ (e: "reset"): void }>();
+const emit = defineEmits<{
+  (e: "reset"): void;
+  (e: "finished",  results: KanaAnswer[]): void;
+}>();
 
 // ---------- 会话状态 ----------
 const running = ref(false);                          // true=答题中 / false=结果页
@@ -91,6 +95,7 @@ const spellOk = ref(false);                          // 最近一次提交对不
 const spellScore = ref(0);                           // 累计答对数
 const spellWrongList = ref<KanaItem[]>([]);          // 错题/跳过清单（结果页只列它）
 const spellInputRef = ref<InstanceType<typeof ElInput> | null>(null); // 输入框组件实例，用来 .focus()
+const results = ref<KanaAnswer[]>([]);
 let composing: boolean = false;                      // 输入法是否处于"候选状态"（IME 关键，见下）
 let timer: ReturnType<typeof setTimeout> | null = null; // 答对 0.8s 自动下一题的定时器
 
@@ -104,6 +109,7 @@ function start() {
   spellAnswered.value = false
   spellOk.value = false
   running.value = true
+  results.value = []
   focusSpellInput()     // 进页面直接把光标放输入框
 }
 
@@ -150,6 +156,8 @@ function spellSubmit() {
   const ok = input === kana || input.toLowerCase() === item.romaji.toLowerCase();
   spellAnswered.value = true                               // 上锁：本题不能再提交
   spellOk.value = ok
+  results.value.push({ itemKey: item.h, correct: ok });
+  console.log(results.value);
   if (ok) {
     spellScore.value += 1
     timer = setTimeout(() => spellNext(), 500)             // 答对 0.8s 后自动下一题
@@ -175,6 +183,7 @@ function spellNext() {
 function skipSpell() {
   if (!running.value || spellAnswered.value) return
   spellWrongList.value.push(order.value[index.value])
+  results.value.push({ itemKey: order.value[index.value].h, correct: false })
   index.value += 1
   if (index.value >= order.value.length) {
     finishSpell()
@@ -191,6 +200,7 @@ function finishSpell() {
   if (!running.value) return
   clearSchedule()
   running.value = false
+  emit("finished", results.value)
 }
 
 // 结果页"再来一轮"：复位并通知父页回设置区（重新选行/数量）

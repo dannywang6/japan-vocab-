@@ -70,12 +70,16 @@ import { computed, onUnmounted, ref, watch } from "vue";
 // 工具：audioUrl(发音人, 假名) 拼音频路径；displayChar(假名对象, script) 取平/片文字；shuffle 洗牌
 import { audioUrl, displayChar, shuffle } from "../utils/kana";
 import type { KanaItem, Script } from "../utils/kana";
+import type { KanaAnswer } from "../types";
 
 // ---------- 组件接口 ----------
 // props：pool=父页给的题目池，script=平/片，speaker=发音人下标
 const props = defineProps<{ pool: KanaItem[]; script: Script; speaker: number }>();
 // emit：只有一个自定义事件 "reset"，结束页"再来一次"时抛给父页，让父页回设置区
-const emit = defineEmits<{ (e: "reset"): void }>();
+const emit = defineEmits<{
+  (e: "reset"): void
+  (e: "finished", results: KanaAnswer[]): void
+}>();
 
 // ---------- 答题状态（这轮会话内变的，全是内部状态） ----------
 const running = ref(false);                                   // true=答题中 / false=结束页
@@ -91,6 +95,7 @@ const showRomaji = ref(false);                                // 格子里是否
 const lastAnswer = ref<KanaItem | null>(null);                // 上一题你点的是哪个（供反馈条显示"你选了X"）
 const lastAnswerCorrect = ref(false);                         // 上一题是否答对（决定反馈条红/绿）
 const gridOrder = ref<"sorted" | "shuffled">("shuffled");     // 九宫格排序方式（默认乱序）
+const results = ref<KanaAnswer[]>([]);
 let audio: HTMLAudioElement | null = null;                    // 复用的 <audio> 实例（不每次都 new）
 let timer: ReturnType<typeof setTimeout> | null = null;       // 判分后定时换下一题/清高亮的定时器句柄
 
@@ -108,6 +113,7 @@ function start() {
   // 按 gridOrder 决定九宫格内容：sorted=原序副本 / shuffled=洗牌
   quizPool.value = gridOrder.value === "sorted" ? [...props.pool] : shuffle(props.pool)
   running.value = true
+  results.value = []
   newQuestion()
 }
 // defineExpose：告诉父页"我这个组件对外只开放 start"；父页才能 .value?.start()
@@ -131,12 +137,8 @@ function newQuestion() {
   lastAnswer.value = null
   lastAnswerCorrect.value = false
   answeredChar.value = displayChar(next, props.script)
+  highlight.value = {}
   playQuestion(next)          // 自动朗读本题
-  clearSchedule()             // 先把上一题遗留的定时器清掉
-  // 600ms 后清掉高亮（让高亮闪一会儿自然消失，不然一直红绿）
-  timer = setTimeout(() => {
-    highlight.value = {}
-  }, 600)
 }
 
 // 播放某题的读音（复用同一个 audio 对象，免去反复 new Audio）
@@ -156,6 +158,7 @@ function answer(item: KanaItem) {
   const char = displayChar(item, props.script)                   // 点的字
   const answerChar = displayChar(current.value, props.script)    // 正确答案
   const isCorrect = item.romaji === current.value.romaji         // !!!判分核心：音标相同即算对（同音不同体也算）
+  results.value.push({ itemKey: current.value.h, correct: isCorrect })
   solved.value = true
   lastAnswer.value = item
   lastAnswerCorrect.value = isCorrect
@@ -168,12 +171,12 @@ function answer(item: KanaItem) {
       : { [char]: "correct", [answerChar]: "correct" }
     correctCount.value += 1
     totalCount.value += 1
-    timer = setTimeout(newQuestion, 1200)
+    timer = setTimeout(newQuestion, 800)
   } else {
     // 错：点的格标红、正确格标绿，1.6s 后下一题（留久点看清对错）
     highlight.value = { [char]: "wrong", [answerChar]: "correct" }
     totalCount.value += 1
-    timer = setTimeout(newQuestion, 1600)
+    timer = setTimeout(newQuestion, 2000)
   }
 }
 
@@ -199,11 +202,12 @@ function replayQuestion() {
   if (running.value && current.value) playQuestion(current.value)
 }
 
-// ---------- 结束（停止会话，显示成绩页；不通知父页） ----------
+// ---------- 结束（停止会话） ----------
 function stopQuiz() {
   clearSchedule()
   if (audio) audio.pause()
   running.value = false
+  emit("finished", results.value)
 }
 
 // ---------- 结果页"再来一次"：复位并通知父页回设置区 ----------

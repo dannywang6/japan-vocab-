@@ -80,3 +80,14 @@ export interface PageResult<T> {
     total: number
     list: T[]
 }
+
+//一道假名题目作答结果
+export interface KanaAnswer {
+    itemKey: string    //唯一标识 全部为平假名 h
+    correct: boolean
+}
+
+//一次会话练习结果(整道题的结果)
+export interface KanaSessionPayload {
+    items: KanaAnswer[]
+}
