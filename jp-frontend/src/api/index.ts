@@ -79,4 +79,4 @@ export const getVocabularyPage = (params: { keyword?: string; page?: number; siz
 
 //假名测试易错统计
 export const submitKanaSession = (data: KanaSessionPayload): Promise<ApiResponse<null>> =>
-    request.post(`/api/kana/mistakes/session`, data)
+    request.post(`/api/kana/answer-logs/session`, data)
