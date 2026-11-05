@@ -63,12 +63,24 @@ public class KanaAnswerLogServiceImpl implements KanaAnswerLogService {
     //最近封存时间查询
     @Override
     public LocalDateTime getLastArchivedAt() {
-        return kanaAnswerLogMapper.selectHistoryRange().getLastArchivedAt();
+        KanaHistoryRangeDTO range = kanaAnswerLogMapper.selectHistoryRange();
+        //结果不存在 为null
+        if(range == null) {
+            return null;
+        }
+        //有数据,但没有封存时间 也返回null
+        return range.getLastArchivedAt();
     }
 
     //历史范围查询
     @Override
     public KanaHistoryRangeDTO getHistoryRange() {
-        return kanaAnswerLogMapper.selectHistoryRange();
+        KanaHistoryRangeDTO range = kanaAnswerLogMapper.selectHistoryRange();
+
+        if (range == null) {
+            return new KanaHistoryRangeDTO();
+        }
+
+        return range;
     }
 }
