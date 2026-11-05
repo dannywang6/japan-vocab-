@@ -32,8 +32,8 @@
 </template>
 
 <script setup lang="ts">
-import { KANA_GROUPS, displayChar, groupLabel } from "../utils/kana"
-import type { Script } from "../utils/kana"
+import { KANA_GROUPS, displayChar, groupLabel } from "../../utils/kana.ts"
+import type { Script } from "../../utils/kana.ts"
 
 // ---------- 组件接口（显式声明"我能收什么、能往外报什么"） ----------
 // props（父页单向传进来的数据）：

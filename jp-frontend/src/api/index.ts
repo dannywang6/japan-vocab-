@@ -7,7 +7,9 @@ import type {
     QuizResult,
     SubmitPayload,
     TodayReview,
-    PageResult, KanaSessionPayload
+    PageResult,
+    KanaSessionPayload,
+    WeakKana, KanaHistoryRange
 } from "../types";
 import {ElMessage} from "element-plus";
 
@@ -77,6 +79,26 @@ export const searchVocabulary = (keyword: string): Promise<ApiResponse<Vocabular
 export const getVocabularyPage = (params: { keyword?: string; page?: number; size?: number }): Promise<ApiResponse<PageResult<Vocabulary>>> =>
     request.get('/api/vocabularies/page', { params })
 
-//假名测试易错统计
+//假名测试易错统计提交
 export const submitKanaSession = (data: KanaSessionPayload): Promise<ApiResponse<null>> =>
     request.post(`/api/kana/answer-logs/session`, data)
+
+//日常易错假名
+export const getWeakKana = (): Promise<ApiResponse<WeakKana[]>> =>
+    request.get('/api/kana/answer-logs/weak')
+
+//历史易错假名
+export const getWeakKanaHistory = (startDate: string, endDate: string): Promise<ApiResponse<WeakKana[]>> =>
+    request.get('/api/kana/answer-logs/weak/history', { params: { startDate, endDate}})
+
+//最近封存时间
+export const getLastArchivedAt = (): Promise<ApiResponse<string | null>> =>
+    request.get('/api/kana/answer-logs/last-archived')
+
+//封存目前
+export const archiveKanaLogs = (): Promise<ApiResponse<null>> =>
+    request.post('/api/kana/answer-logs/archive')
+
+//历史统计范围
+export const getKanaHistoryRange = (): Promise<ApiResponse<KanaHistoryRange>> =>
+    request.get('/api/kana/answer-logs/history/range')

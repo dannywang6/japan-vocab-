@@ -19,7 +19,16 @@
         <el-radio-button value="hiragana">平假名</el-radio-button>
         <el-radio-button value="katakana">片假名</el-radio-button>
       </el-radio-group>
+      <el-button
+      v-if="!sessionActive"
+      class="history-entry"
+      text
+      bg
+      @click="historyVisible = true"
+      >历史易错</el-button>
     </div>
+
+    <KanaHistoryDialog v-model="historyVisible"/>
 
     <!-- 设置区：会话没开始时显示。从上到下：选行 → 数量（仅听写/拼写）→ 发音人（拼写不显示）→ 开始按钮 -->
     <div v-if="!sessionActive" class="panel">
@@ -101,10 +110,11 @@ import type { Script } from "../utils/kana";
 import { submitKanaSession } from "../api";
 import type{ KanaAnswer } from "../types";
 // 三个功能面板 + 选组组件
-import KanaGroupGrid from "../components/KanaGroupGrid.vue";
-import KanaQuizPanel from "../components/KanaQuizPanel.vue";
-import KanaDictationPanel from "../components/KanaDictationPanel.vue";
-import KanaSpellingPanel from "../components/KanaSpellingPanel.vue";
+import KanaGroupGrid from "../components/dictation/KanaGroupGrid.vue";
+import KanaQuizPanel from "../components/dictation/KanaQuizPanel.vue";
+import KanaDictationPanel from "../components/dictation/KanaDictationPanel.vue";
+import KanaSpellingPanel from "../components/dictation/KanaSpellingPanel.vue";
+import KanaHistoryDialog from "../components/dictation/KanaHistoryDialog.vue";
 
 // mode 只允许这三个值，模板里用 v-else-if / v-else 逐一对应到某个面板
 type Mode = "quiz" | "dictation" | "spelling";
@@ -124,6 +134,8 @@ const countSel = ref<string>("all");
 const customCount = ref(5);
 // 会话锁：false=显示设置区 / true=已点开始、显示对应面板。切模式/平片会把它砸回 false
 const sessionActive = ref(false);
+//历史易错弹窗开关
+const historyVisible = ref(false);
 
 // ---------- 三个面板的"遥控器"引用 ----------
 // InstanceType<typeof 组件> = 该组件实例的类型（也算教学点：模板 ref 拿到的就是实例对象）
@@ -190,12 +202,6 @@ watch(selectedGroups, () => {
 </script>
 
 <style scoped>
-.mode-switch {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin-bottom: 16px;
-}
 
 .panel {
   background: var(--bg-card);
@@ -223,5 +229,15 @@ watch(selectedGroups, () => {
   font-size: 14px;
   color: var(--text-secondary);
   margin-right: 4px;
+}
+.mode-switch {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;   /* 新增 */
+  gap: 8px;
+  margin-bottom: 16px;
+}
+.history-entry {
+  margin-left: auto;     /* 推到最右 */
 }
 </style>

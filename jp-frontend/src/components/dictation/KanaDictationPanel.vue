@@ -51,8 +51,8 @@
 
 <script setup lang="ts">
 import { onUnmounted, ref } from "vue";
-import { audioUrl, groupLabelOf, shuffle } from "../utils/kana";
-import type { KanaItem, Script } from "../utils/kana";
+import { audioUrl, groupLabelOf, shuffle } from "../../utils/kana.ts";
+import type { KanaItem, Script } from "../../utils/kana.ts";
 import { ElMessage } from "element-plus";
 
 // ---------- 组件接口 ----------

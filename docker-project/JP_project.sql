@@ -18,6 +18,20 @@ SET NAMES utf8mb4;
 SET FOREIGN_KEY_CHECKS = 0;
 
 -- ----------------------------
+-- Table structure for kana_answer_log
+-- ----------------------------
+DROP TABLE IF EXISTS `kana_answer_log`;
+CREATE TABLE `kana_answer_log` (
+  `id` bigint NOT NULL AUTO_INCREMENT,
+  `item_key` varchar(10) NOT NULL COMMENT '假名唯一key(用h假名,如 が)',
+  `is_correct` tinyint(1) NOT NULL,
+  `answered_at` datetime DEFAULT CURRENT_TIMESTAMP,
+  `is_archived` tinyint(1) NOT NULL DEFAULT 0 COMMENT '0=活跃 1=已封存(不计入统计)',
+  PRIMARY KEY (`id`),
+  KEY `idx_item_time` (`item_key`, `answered_at`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+-- ----------------------------
 -- Table structure for quiz_record
 -- ----------------------------
 DROP TABLE IF EXISTS `quiz_record`;

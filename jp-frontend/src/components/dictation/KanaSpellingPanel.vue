@@ -72,9 +72,9 @@
 // ---------- 导入 ----------
 import { nextTick, onUnmounted, ref } from "vue";
 import { ElInput } from "element-plus";
-import { displayChar, groupLabelOf, shuffle } from "../utils/kana";
-import type { KanaItem, Script } from "../utils/kana";
-import type { KanaAnswer } from "../types";
+import { displayChar, groupLabelOf, shuffle } from "../../utils/kana.ts";
+import type { KanaItem, Script } from "../../utils/kana.ts";
+import type { KanaAnswer } from "../../types";
 
 // ---------- 组件接口 ----------
 // props：pool=题目池，script=平/片（决定题干显示平假名 or 片假名），count=拼多少题

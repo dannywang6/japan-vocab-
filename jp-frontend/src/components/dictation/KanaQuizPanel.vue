@@ -68,9 +68,9 @@
 // ---------- 导入 ----------
 import { computed, onUnmounted, ref, watch } from "vue";
 // 工具：audioUrl(发音人, 假名) 拼音频路径；displayChar(假名对象, script) 取平/片文字；shuffle 洗牌
-import { audioUrl, displayChar, shuffle } from "../utils/kana";
-import type { KanaItem, Script } from "../utils/kana";
-import type { KanaAnswer } from "../types";
+import { audioUrl, displayChar, shuffle } from "../../utils/kana.ts";
+import type { KanaItem, Script } from "../../utils/kana.ts";
+import type { KanaAnswer } from "../../types";
 
 // ---------- 组件接口 ----------
 // props：pool=父页给的题目池，script=平/片，speaker=发音人下标

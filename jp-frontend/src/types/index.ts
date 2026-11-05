@@ -91,3 +91,17 @@ export interface KanaAnswer {
 export interface KanaSessionPayload {
     items: KanaAnswer[]
 }
+
+//获取易错统计
+export interface WeakKana {
+    itemKey: string
+    totalCount: number
+    wrongCount: number
+    wrongRate: number
+}
+
+//历史统计范围
+export interface KanaHistoryRange {
+    firstAnsweredAt: string | null
+    lastArchivedAt: string | null
+}
