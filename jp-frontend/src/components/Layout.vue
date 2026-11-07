@@ -2,7 +2,7 @@
   <el-container style="height: 100vh">
     <div v-if="showSidebar" class="mobile-overlay" @click="showSidebar = false" />
     <el-aside width="200px" :class="{ 'mobile-show': showSidebar }">
-      <div class="logo" @click="goHome">🇯🇵 日语学习</div>
+      <div class="logo" @click="goHome">日语学习</div>
       <el-menu
         :default-active="route.path"
         router
