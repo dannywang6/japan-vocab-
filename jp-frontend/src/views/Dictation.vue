@@ -12,8 +12,8 @@
       <!-- mode = 选功能（决定渲染哪个面板）；script = 选平/片（传给子面板决定显示哪种字） -->
       <el-radio-group v-model="mode" size="large">
         <el-radio-button value="quiz">测验模式</el-radio-button>
-        <el-radio-button value="dictation">听写模式</el-radio-button>
         <el-radio-button value="spelling">拼写模式</el-radio-button>
+        <el-radio-button value="dictation">听写模式</el-radio-button>
       </el-radio-group>
       <el-radio-group v-model="script" size="large" style="margin-left: 12px">
         <el-radio-button value="hiragana">平假名</el-radio-button>
