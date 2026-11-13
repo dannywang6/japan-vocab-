@@ -113,6 +113,7 @@ public class AIServiceImpl implements AIService {
         Map<String, Object> body = new HashMap<>();
         body.put("model", model);
         body.put("temperature", 0.1);
+        body.put("enable_thinking", false);
 
         List<Map<String, String>> messages = new ArrayList<>();
 
