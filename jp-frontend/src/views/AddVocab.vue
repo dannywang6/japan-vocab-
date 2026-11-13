@@ -62,6 +62,7 @@
       <el-form-item label="词性">
         <el-input
             v-model="form.partOfSpeech"
+            @input="onFieldChange('partOfSpeech')"
             placeholder="例如：名词、动词、い形容词"
         />
       </el-form-item>
@@ -81,6 +82,7 @@
                 v-model="form.example"
                 type="textarea"
                 :rows="3"
+                @input="onFieldChange('example')"
                 placeholder="AI 自动生成日语例句"
                 style="flex: 1;"
             />
@@ -104,6 +106,7 @@
             v-model="form.exampleMeaning"
             type="textarea"
             :rows="3"
+            @input="onFieldChange('exampleMeaning')"
             placeholder="AI 自动生成例句中文翻译"
         />
       </el-form-item>
@@ -384,7 +387,23 @@ const onFieldChange = (field: string) => {
     form.value.english = ''
   }
 
+  if (field !== 'exampleMeaning') {
+    form.value.exampleMeaning = ''
+  }
+
+  if (field !== 'partOfSpeech') {
+    form.value.partOfSpeech = ''
+  }
+
+  if (field !== 'example') {
+    form.value.example = ''
+  }
+
+  if (field !== 'note') {
+    form.value.note = ''
+  }
 }
+
 </script>
 
 
