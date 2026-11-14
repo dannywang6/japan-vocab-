@@ -63,7 +63,6 @@
         <el-input
             v-model="form.partOfSpeech"
             @input="onFieldChange('partOfSpeech')"
-            placeholder="例如：名词、动词、い形容词"
         />
       </el-form-item>
 
@@ -83,7 +82,6 @@
                 type="textarea"
                 :rows="3"
                 @input="onFieldChange('example')"
-                placeholder="AI 自动生成日语例句"
                 style="flex: 1;"
             />
 
@@ -107,7 +105,6 @@
             type="textarea"
             :rows="3"
             @input="onFieldChange('exampleMeaning')"
-            placeholder="AI 自动生成例句中文翻译"
         />
       </el-form-item>
 
